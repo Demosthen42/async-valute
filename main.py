@@ -5,7 +5,8 @@ import json
 import logging
 import argparse
 from aiohttp import web
-from sys import stdout,stderr
+import sys
+from sys import stdout
 
 LOGGER_FORMAT = '%(asctime)s %(message)s'
 URL = 'https://www.cbr-xml-daily.ru/daily_json.js'
@@ -17,13 +18,14 @@ parser.add_argument('--usd', type=float, default=300)
 parser.add_argument('--period', type=int, default=600)
 parser.add_argument('--debug', required=False, default=1)
 
-logging.basicConfig(format=LOGGER_FORMAT, stream=stdout, datefmt='[%H:%M:%S]')
+logging.basicConfig(stream=stdout, format=LOGGER_FORMAT, datefmt='[%H:%M:%S]')
 logger = logging.getLogger()
 #logFormatter = logging.Formatter\
 #("%(name)-12s %(asctime)s %(levelname)-8s %(filename)s:%(funcName)s %(message)s")
-#consoleHandler = logging.StreamHandler(stdout)
+#consoleHandler = logging.Handler(stdout)
 #consoleHandler.setLevel(logging.DEBUG)
 #consoleHandler.setFormatter(logFormatter)
+##consoleHandler.flush = sys.stdout.flush
 #logger.addHandler(consoleHandler)
 
 
@@ -115,6 +117,7 @@ def print_valute():
 
 
 async def print_somewhat():
+    logger = logging.getLogger()
     temp_valute = [0, 0, 0, 0, 0]
     while True:
         temp_bool = 0
@@ -124,6 +127,10 @@ async def print_somewhat():
         if temp_bool:
             temp_valute = [RUB.amount, USD.amount, EUR.amount, USD.rate, EUR.rate]
             logger.info(print_valute())
+            #logger.handlers[0].flush()
+            #sys.stdout.flush()
+
+            print('flush was here')
         await asyncio.sleep(60)
 
 
@@ -154,14 +161,15 @@ async def fetch(session, url):
 if __name__ == '__main__':
     print('hello')
     args = parser.parse_args()
-    if args.debug in (1, 'true', True, 'y', 'Y'):
+    if args.debug in ('1', 1, 'true', True, 'y', 'Y'):
         logger.setLevel(logging.DEBUG)
-    elif args.debug in (0, 'false', False, 'n', 'N'):
+
+    elif args.debug in ('0', 0, 'false', False, 'n', 'N'):
         logger.setLevel(logging.INFO)
     else:
         logger.setLevel(logging.WARNING)
 
-    logger.info('it seems to be loaded')
+    logger.critical('it seems to be loaded')
     timeout = args.period
     RUB = Val('RUB', args.rub, 1)
     USD = Val('USD', args.usd, 75)
